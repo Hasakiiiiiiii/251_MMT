@@ -1,0 +1,36 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Sign up</title>
+  </head>
+  <body>
+    <h1>Sign up</h1>
+
+    <!--
+      NOTE: This form uses GET in the action below. GET places form data
+      in the URL (query string). Do NOT use GET to transmit passwords over
+      the network in a real application. Prefer POST over HTTPS for sign-up.
+    -->
+
+    <form name="signUpForm" method="GET" action="/sign_up" onsubmit="return validateForm()">
+      Username: <input name="username" type="text" required><br>
+      Password: <input name="password" type="password" required><br>
+      Re_Password: <input name="re_password" type="password" required><br>
+      <input type="submit" value="Sign up">
+    </form>
+
+    <script type="text/javascript">
+      function validateForm() {
+        var form = document.forms["signUpForm"];
+        var password = form["password"].value;
+        var rePassword = form["re_password"].value;
+        if (password !== rePassword) {
+          alert("Passwords do not match.");
+          return false;
+        }
+        return true;
+      }
+    </script>
+  </body>
+</html>
