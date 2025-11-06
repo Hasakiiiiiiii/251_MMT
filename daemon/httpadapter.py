@@ -178,13 +178,13 @@ class HttpAdapter:
                 result = req.hook(headers=headers, body=body)
                 resp.status_code = 200
                 resp.reason = "OK"
-                print("result: {}\r\n".format(result))
-                resp.body = result.encode()
+                # print("result: {}\r\n".format(result))
+                # resp.body = result.encode()
 
                 
         # Build response
         response = resp.build_response(req)
-        print("[HttpAdapter] send response {}".format(response.decode()))
+        # print("[HttpAdapter] send response {}".format(response.decode()))
         conn.sendall(response)
 
         print("-----------------------------------ENDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD------------------------------------")
