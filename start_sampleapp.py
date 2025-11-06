@@ -34,7 +34,7 @@ PORT = 8000  # Default port
 
 app = WeApRous()
 
-@app.route('/login', methods=['POST'])
+@app.route('/login.html', methods=['POST'])
 def login(headers="guest", body="anonymous"):
     """
     Handle user login via POST request.
@@ -45,7 +45,17 @@ def login(headers="guest", body="anonymous"):
     :param headers (str): The request headers or user identifier.
     :param body (str): The request body or login payload.
     """
-    print ("[SampleApp] Logging in {} to {}".format(headers, body))
+    # print ("[SampleApp] Logging in {} to {}".format(headers, body))
+    print("HEADERS: {}\n BODY: {}".format(headers, body))
+
+    username_password =body.split('&')
+    username = username_password[0].split('=')[1]
+    password = username_password[1].split('=')[1]
+    print("Username: {}\nPassword: {}".format(username, password))
+
+    if username != "admin" or password != "password":
+        return {"message": "Login failed"}
+    return {"message": "Login success"}
 
 @app.route('/hello', methods=['PUT'])
 def hello(headers, body):
@@ -71,5 +81,5 @@ if __name__ == "__main__":
     port = args.server_port
 
     # Prepare and launch the RESTful application
-    app.prepare_address(ip, port)
+    app.prepare_address(ip, port) # configure backend
     app.run()

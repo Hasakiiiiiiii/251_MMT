@@ -63,7 +63,7 @@ def handle_client(ip, port, conn, addr, routes):
     # Handle client
     daemon.handle_client(conn, addr, routes)
 
-def run_backend(ip, port, routes):
+def run_backend(ip, port, routes): # bind client to this and run handle_client to handle
     """
     Starts the backend server, binds to the specified IP and port, and listens for incoming
     connections. Each connection is handled in a separate thread. The backend accepts incoming
@@ -90,9 +90,14 @@ def run_backend(ip, port, routes):
             #        using multi-thread programming with the
             #        provided handle_client routine
             #
-            client_thread = threading.Thread(target=handle_client, args=(ip, port, conn, addr, routes))
-            client_thread.daemon = True
-            client_thread.start()
+            "My code"
+            print(f"[Backend] New connection from {addr}")
+
+            # Create a new thread to handle the client
+            thread = threading.Thread(target=handle_client, args=(ip, port, conn, addr, routes))
+            thread.daemon = True
+            thread.start()
+            
     except socket.error as e:
       print("Socket error: {}".format(e))
 

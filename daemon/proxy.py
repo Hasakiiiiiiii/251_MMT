@@ -42,7 +42,7 @@ PROXY_PASS = {
 }
 
 
-def forward_request(host, port, request):
+def forward_request(host, port, request): # send (request) from client to backend server (host, port)
     """
     Forwards an HTTP request to a backend server and retrieves the response.
 
@@ -90,12 +90,12 @@ def resolve_routing_policy(hostname, routes):
 
     print(hostname)
     proxy_map, policy = routes.get(hostname,('127.0.0.1:9000','round-robin'))
-    print (proxy_map)
-    print (policy)
+    print(proxy_map)
+    print(policy)
 
     proxy_host = ''
     proxy_port = '9000'
-    if isinstance(proxy_map, list):
+    if isinstance(proxy_map, list): # Check if proxy_map is a list
         if len(proxy_map) == 0:
             print("[Proxy] Emtpy resolved routing of hostname {}".format(hostname))
             print("Empty proxy_map result")
@@ -105,7 +105,7 @@ def resolve_routing_policy(hostname, routes):
             # Use a dummy host to raise an invalid connection
             proxy_host = '127.0.0.1'
             proxy_port = '9000'
-        elif len(value) == 1:
+        elif len(proxy_map) == 1:
             proxy_host, proxy_port = proxy_map[0].split(":", 2)
         #elif: # apply the policy handling 
         #   proxy_map
@@ -142,22 +142,22 @@ def handle_client(ip, port, conn, addr, routes):
     request = conn.recv(1024).decode()
 
     # Extract hostname
-    for line in request.splitlines():
+    for line in request.splitlines(): # "Hello\nWorld\nHow are you?\n" -> ["Hello", "World", "How are you?"]
         if line.lower().startswith('host:'):
-            hostname = line.split(':', 1)[1].strip()
+            hostname = line.split(':', 1)[1].strip() # 'host: 127.0.0.1:9000' -> '127.0.0.1:9000'
 
-    print("[Proxy] {} at Host: {}".format(addr, hostname))
+    print("[Proxy] {} at Host: {}".format(addr, hostname)) # Client address at Host Proxy address
 
     # Resolve the matching destination in routes and need conver port
     # to integer value
-    resolved_host, resolved_port = resolve_routing_policy(hostname, routes)
+    resolved_host, resolved_port = resolve_routing_policy(hostname, routes) # Backend Address
     try:
         resolved_port = int(resolved_port)
     except ValueError:
         print("Not a valid integer")
 
     if resolved_host:
-        print("[Proxy] Host name {} is forwarded to {}:{}".format(hostname,resolved_host, resolved_port))
+        print("[Proxy] Host name {} is forwarded to {}:{}".format(hostname,resolved_host, resolved_port)) # Host name Proxy Address is forwarded to Backend Address
         response = forward_request(resolved_host, resolved_port, request)        
     else:
         response = (
@@ -199,6 +199,11 @@ def run_proxy(ip, port, routes):
             #        using multi-thread programming with the
             #        provided handle_client routine
             #
+            "My code"
+            print(f"[Proxy] New connection from {addr}")
+            thread = threading.Thread(target=handle_client, args=(ip, port, conn, addr, routes))
+            thread.start()
+
     except socket.error as e:
       print("Socket error: {}".format(e))
 
