@@ -66,13 +66,13 @@ class HttpAdapter:
         """
 
         #: IP address.
-        self.ip = ip
+        self.ip = ip # backend
         #: Port.
-        self.port = port
+        self.port = port # backend
         #: Connection
-        self.conn = conn
+        self.conn = conn # connect client
         #: Conndection address
-        self.connaddr = connaddr
+        self.connaddr = connaddr # (ip, port) client
         #: Routes
         self.routes = routes
         #: Request
@@ -98,27 +98,96 @@ class HttpAdapter:
         # Connection address.
         self.connaddr = addr
         # Request handler
-        req = self.request
+        req = self.request # new request
         # Response handler
-        resp = self.response
+        resp = self.response # new response
 
         # Handle the request
         msg = conn.recv(1024).decode()
+
+        print("[HttpAdapter] receive message {}".format(msg))
         req.prepare(msg, routes)
 
         # Handle request hook
+        # if req.hook:
+        #     print("[HttpAdapter] hook in route-path METHOD {} PATH {}".format(req.hook._route_path,req.hook._route_methods))
+        #     # req.hook(headers = "bksysnet",body = "get in touch")
+        #     #
+        #     # TODO: handle for App hook here
+        #     #
+        #     headers = req.headers
+        #     body = req.body
+
+        #     print("HEADERS: {}\n BODY: {}".format(headers, body))
+
+        #     if req.hook(headers=headers, body=body) == {"message": "Login success"}:
+        #         resp.status_code = 302
+        #         resp.reason = "Found"
+        #         resp.headers["Set-Cookie"] = "auth=true"  # gán cookie
+        #         req.method = "GET"
+        #     else:
+        #         resp.status_code = 401
+        #         resp.reason = "Not Found"
+
         if req.hook:
             print("[HttpAdapter] hook in route-path METHOD {} PATH {}".format(req.hook._route_path,req.hook._route_methods))
-            req.hook(headers = "bksysnet",body = "get in touch")
-            #
-            # TODO: handle for App hook here
-            #
+            headers = req.headers
+            body = req.body
 
+            print("PATH: {}, METHOD: {}".format(req.path, req.method))
+
+            # --- Xử lý LOGIN ---
+            if req.path == "/login.html" and req.method == "POST":
+                result = req.hook(headers=headers, body=body)
+                if result == {"message": "Login success"}:
+                    # thành công -> redirect về /
+                    resp.status_code = 302
+                    resp.reason = "Found"
+                    resp.headers["Location"] = "/"
+                    resp.headers["Set-Cookie"] = "auth=true; theme=dark"  # set cookie đăng nhập
+
+                    print("[httpadapter] set cookie: {}".format(resp.headers["Set-Cookie"]))
+                else:
+                    resp.status_code = 401
+                    resp.reason = "Unauthorized"
+                    resp.body = b"<h1>401 Unauthorized</h1>"
+
+            # --- Xử lý INDEX ---
+            elif req.path in ["/", "/index.html"] and req.method == "GET":
+                print("[TEST]HEADERS: {}\n BODY: {}\n".format(headers, body))
+                cookies = req.cookies
+                print("Cookies: {}".format(cookies))
+                if "auth" in cookies and cookies["auth"] == "true":
+                    print("valid cookies")
+                    # hợp lệ -> gửi trang index
+                    resp.status_code = 200
+                    resp.reason = "OK"
+                    try:
+                        with open("index.html", "rb") as f:
+                            resp.body = f.read()
+                    except FileNotFoundError:
+                        resp.body = b"<h1>Index not found</h1>"
+                else:
+                    print("Cookies empty")
+                    # chưa đăng nhập
+                    resp.status_code = 401
+                    resp.reason = "Unauthorized"
+
+            # --- Các route khác ---
+            else:
+                result = req.hook(headers=headers, body=body)
+                resp.status_code = 200
+                resp.reason = "OK"
+                # print("result: {}\r\n".format(result))
+                # resp.body = result.encode()
+
+                
         # Build response
         response = resp.build_response(req)
-
-        #print(response)
+        # print("[HttpAdapter] send response {}".format(response.decode()))
         conn.sendall(response)
+
+        print("-----------------------------------ENDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD------------------------------------")
         conn.close()
 
     @property

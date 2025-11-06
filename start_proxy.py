@@ -35,17 +35,16 @@ Requirements:
 
 """
 
-import socket
-import threading
+# import socket
+# import threading
 import argparse
 import re
-from urlparse import urlparse
-from collections import defaultdict
+# from urllib.parse import urlparse
+# from collections import defaultdict
 
 from daemon import create_proxy
 
 PROXY_PORT = 8080
-
 
 def parse_virtual_hosts(config_file):
     """
@@ -61,6 +60,14 @@ def parse_virtual_hosts(config_file):
     # Match each host block
     host_blocks = re.findall(r'host\s+"([^"]+)"\s*\{(.*?)\}', config_text, re.DOTALL)
 
+    """ (host, block)
+    [
+        ('192.168.56.103:8080', 'proxy_pass http://192.168.56.103:9000;\n'),
+        ('app1.local', 'proxy_pass http://192.168.56.103:9001;\n'),
+        ('app2.local', 'proxy_set_header Host $host;\n proxy_pass http://192.168.56.210:9002;\n proxy_pass http://192.168.56.220:9002;\n dist_policy round-robin\n')
+    ]
+    """
+
     dist_policy_map = ""
 
     routes = {}
@@ -68,13 +75,23 @@ def parse_virtual_hosts(config_file):
         proxy_map = {}
 
         # Find all proxy_pass entries
-        proxy_passes = re.findall(r'proxy_pass\s+http://([^\s;]+);', block)
+        proxy_passes = re.findall(r'proxy_pass\s+http://([^\s;]+);', block) # ['192.168.56.103:9000', '192.168.56.103:9001', '192.168.56.210:9002', '192.168.56.220:9002']
         map = proxy_map.get(host,[])
         map = map + proxy_passes
         proxy_map[host] = map
 
+        """
+        {
+            "app2.local": [
+                'http://192.168.56.210:9002',
+                'http://192.168.56.220:9002'
+            ]
+        }
+        """
+
         # Find dist_policy if present
-        policy_match = re.search(r'dist_policy\s+(\w+)', block)
+        # policy_match = re.search(r'dist_policy\s+(\w+)', block)
+        policy_match = re.search(r'dist_policy\s*(\w+(-\w+)?)', block)
         if policy_match:
             dist_policy_map = policy_match.group(1)
         else: #default policy is round_robin
@@ -88,16 +105,25 @@ def parse_virtual_hosts(config_file):
         #       the policy is applied to identify the highes matching
         #       proxy_pass
         #
+        """
+            {
+                "app1.local": ('http://192.168.56.103:9001', 'round-robin')
+            }
+        """
         if len(proxy_map.get(host,[])) == 1:
             routes[host] = (proxy_map.get(host,[])[0], dist_policy_map)
+        
         # esle if:
         #         TODO:  apply further policy matching here
         #
         else:
-            routes[host] = (proxy_map.get(host,[]), dist_policy_map)
+            routes[host] = (proxy_map.get(host,[]), dist_policy_map) 
+        """
+        "app2.local": (['http://192.168.56.210:9002', 'http://192.168.56.220:9002'], 'round-robin')
+        """
 
     for key, value in routes.items():
-        print key, value
+        print (key, value)
     return routes
 
 
