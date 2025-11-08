@@ -70,6 +70,10 @@ def hello(headers, body):
     """
     print ("[SampleApp] ['PUT'] Hello in {} to {}".format(headers, body))
 
+@app.route('/index.html', methods=['GET'])
+def index(headers="guest", body="anonymous"):
+    print("OKKKKKKKKKKKKKKKKKKKKKKK, {} {}".format(headers, body))
+
 if __name__ == "__main__":
     # Parse command-line arguments to configure server IP and port
     parser = argparse.ArgumentParser(prog='Backend', description='', epilog='Beckend daemon')
